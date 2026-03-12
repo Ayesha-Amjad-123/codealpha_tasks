@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Melodia – Music Player</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0b0b1a;--panel:#10102a;--card:#16163a;--hover:#1e1e45;
+  --purple:#7c4dff;--pink:#e040fb;--blue:#448aff;--teal:#00e5ff;
+  --text:#fff;--sub:#8888bb;--muted:#44446a;
+  --sidebar:190px;--rightpanel:260px;
+}
+html,body{height:100%;overflow:hidden;font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);font-size:13px;}
+.app{display:flex;height:100vh;}
+.sidebar{width:var(--sidebar);background:rgba(8,8,20,0.98);display:flex;flex-direction:column;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.05);z-index:10;}
+.content{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+.right{width:var(--rightpanel);background:rgba(8,8,20,0.95);display:flex;flex-direction:column;flex-shrink:0;border-left:1px solid rgba(255,255,255,0.05);}
+/* SIDEBAR */
+.logo{padding:16px 14px 12px;display:flex;align-items:center;gap:9px;border-bottom:1px solid rgba(255,255,255,0.05);}
+.logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--purple),var(--pink));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.logo-name{font-size:16px;font-weight:800;background:linear-gradient(90deg,var(--purple),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.profile-area{display:flex;flex-direction:column;align-items:center;padding:14px 12px 12px;border-bottom:1px solid rgba(255,255,255,0.05);}
+.profile-pic{width:54px;height:54px;border-radius:50%;overflow:hidden;border:2px solid rgba(124,77,255,0.5);margin-bottom:6px;background:linear-gradient(135deg,#667eea,#764ba2);}
+.profile-pic img{width:100%;height:100%;object-fit:cover;display:block;}
+.profile-name{font-size:12px;font-weight:600;}
+.profile-label{font-size:10px;color:var(--sub);margin-top:1px;}
+.nav{padding:8px 0;flex:1;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;color:var(--sub);font-size:12.5px;font-weight:500;transition:all .2s;border-left:3px solid transparent;}
+.nav-item:hover{background:rgba(255,255,255,0.04);color:var(--text);}
+.nav-item.active{background:rgba(124,77,255,0.1);color:var(--text);border-left-color:var(--purple);}
+.nav-icon{font-size:15px;width:18px;text-align:center;}
+.nav-badge{margin-left:auto;background:var(--purple);color:white;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;}
+.nav-bottom{border-top:1px solid rgba(255,255,255,0.05);padding:6px 0;}
+/* PAGES */
+.page{display:none;height:100%;overflow-y:auto;padding:20px 22px;}
+.page.active{display:block;}
+.page::-webkit-scrollbar{width:4px;}
+.page::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px;}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.page-title{font-size:19px;font-weight:800;}
+.search-bar{display:flex;align-items:center;gap:7px;background:var(--card);border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:7px 13px;width:195px;}
+.search-bar input{background:none;border:none;color:var(--text);font-family:'Outfit',sans-serif;font-size:12px;outline:none;flex:1;width:100%;}
+.search-bar input::placeholder{color:var(--sub);}
+.sec-title{font-size:14px;font-weight:700;margin-bottom:13px;margin-top:2px;}
+/* HERO */
+.hero-row{display:flex;gap:11px;margin-bottom:7px;}
+.hero-card{position:relative;border-radius:13px;overflow:hidden;cursor:pointer;flex-shrink:0;transition:transform .25s,box-shadow .25s;}
+.hero-card:hover{transform:translateY(-3px);box-shadow:0 14px 35px rgba(0,0,0,0.5);}
+.hero-card.lg{width:225px;height:135px;}
+.hero-card.md{width:195px;height:135px;border:2px solid rgba(255,255,255,0.2);}
+.hero-card.sm{width:160px;height:135px;opacity:.72;}
+.hero-bg-div{width:100%;height:100%;}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.85) 0%,rgba(0,0,0,.1) 60%,transparent 100%);display:flex;flex-direction:column;justify-content:flex-end;padding:11px;}
+.hero-name{font-size:13px;font-weight:700;margin-bottom:6px;}
+.hero-btn{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.15);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.3);color:#fff;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;width:fit-content;}
+.hero-btn:hover{background:rgba(255,255,255,.25);}
+.dots{display:flex;gap:5px;justify-content:center;margin:8px 0 18px;}
+.dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);cursor:pointer;transition:all .3s;}
+.dot.active{width:18px;border-radius:3px;background:var(--purple);}
+/* ARTISTS */
+.artists-row{display:flex;gap:18px;overflow-x:auto;padding-bottom:4px;margin-bottom:22px;}
+.artists-row::-webkit-scrollbar{display:none;}
+.artist{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;transition:transform .2s;}
+.artist:hover{transform:scale(1.06);}
+.artist-pic{width:72px;height:72px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.1);background:var(--card);transition:border-color .2s;}
+.artist-pic img{width:100%;height:100%;object-fit:cover;display:block;}
+.artist:hover .artist-pic{border-color:var(--purple);}
+.artist-name{font-size:10.5px;font-weight:500;color:var(--sub);text-align:center;max-width:74px;line-height:1.3;}
+/* ALBUMS ROW */
+.albums-row{display:flex;gap:13px;overflow-x:auto;padding-bottom:4px;}
+.albums-row::-webkit-scrollbar{display:none;}
+.album{flex-shrink:0;width:112px;cursor:pointer;transition:transform .2s;}
+.album:hover{transform:translateY(-4px);}
+.album-cover{width:112px;height:112px;border-radius:10px;overflow:hidden;margin-bottom:7px;position:relative;background:var(--card);}
+.album-cover img{width:100%;height:100%;object-fit:cover;display:block;}
+.alb-play-ov{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;border-radius:10px;}
+.album:hover .alb-play-ov{opacity:1;}
+.alb-play-btn{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--pink));display:flex;align-items:center;justify-content:center;font-size:13px;border:none;color:#fff;cursor:pointer;}
+.album-title{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.album-artist-name{font-size:10px;color:var(--sub);}
+/* TRENDING */
+.trending-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:15px;}
+.trending-card{background:var(--card);border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .2s,box-shadow .2s;}
+.trending-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(0,0,0,.45);}
+.tc-wrap{position:relative;}
+.trending-img{width:100%;height:125px;object-fit:cover;display:block;}
+.trending-rank{position:absolute;top:7px;left:7px;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;}
+.trending-info{padding:9px 10px;}
+.trending-title{font-size:12px;font-weight:600;margin-bottom:2px;}
+.trending-sub{font-size:10px;color:var(--sub);}
+/* FAVORITES */
+.fav-list{display:flex;flex-direction:column;gap:3px;}
+.fav-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:10px;cursor:pointer;transition:background .15s;}
+.fav-item:hover{background:var(--hover);}
+.fav-item.playing{background:rgba(124,77,255,.12);}
+.fav-num{width:20px;color:var(--muted);font-size:12px;text-align:center;flex-shrink:0;}
+.fav-item.playing .fav-num{color:var(--purple);}
+.fav-img{width:40px;height:40px;border-radius:8px;overflow:hidden;flex-shrink:0;background:var(--card);}
+.fav-img img{width:100%;height:100%;object-fit:cover;display:block;}
+.fav-info{flex:1;min-width:0;}
+.fav-title{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fav-artist{font-size:11px;color:var(--sub);}
+.fav-dur{font-size:11px;color:var(--muted);flex-shrink:0;}
+.fav-heart{color:var(--pink);font-size:13px;margin-right:2px;}
+/* PLAYLISTS */
+.playlists-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px;}
+.pl-card{background:var(--card);border-radius:13px;overflow:hidden;cursor:pointer;transition:transform .2s,box-shadow .2s;}
+.pl-card:hover{transform:translateY(-4px);box-shadow:0 10px 26px rgba(0,0,0,.45);}
+.pl-cover{width:100%;height:135px;position:relative;overflow:hidden;}
+.pl-cover img{width:100%;height:100%;object-fit:cover;display:block;}
+.pl-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7),transparent);}
+.pl-info{padding:11px;}
+.pl-name{font-size:13px;font-weight:700;}
+.pl-count{font-size:10px;color:var(--sub);margin-top:2px;}
+/* ALBUMS PAGE */
+.albums-page-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;}
+.ap-card{cursor:pointer;transition:transform .2s;}
+.ap-card:hover{transform:translateY(-4px);}
+.ap-cover{width:100%;aspect-ratio:1;border-radius:12px;overflow:hidden;margin-bottom:8px;background:var(--card);position:relative;}
+.ap-cover img{width:100%;height:100%;object-fit:cover;display:block;}
+/* RIGHT PANEL */
+.r-title{font-size:13px;font-weight:700;padding:14px 14px 9px;border-bottom:1px solid rgba(255,255,255,0.05);letter-spacing:.2px;}
+.r-list{flex:1;overflow-y:auto;padding:4px 0;}
+.r-list::-webkit-scrollbar{width:3px;}
+.r-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.07);}
+/* Each row: thumbnail | info block | duration — matches reference exactly */
+.r-item{display:flex;align-items:center;gap:10px;padding:6px 12px;cursor:pointer;transition:background .12s;border-radius:0;}
+.r-item:hover{background:rgba(255,255,255,.05);}
+.r-item.active{background:rgba(124,77,255,.08);}
+.r-item.active .r-ititle{color:var(--purple);}
+/* Square thumbnail — same size as reference */
+.r-thumb{width:36px;height:36px;border-radius:5px;overflow:hidden;flex-shrink:0;background:var(--card);}
+.r-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+/* Info column fills remaining space */
+.r-iinfo{flex:1;min-width:0;}
+.r-ititle{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;color:var(--text);}
+.r-iartist{font-size:10px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;margin-top:1px;}
+/* Duration — flush right, muted, same style as reference */
+.r-idur{font-size:11px;color:var(--sub);flex-shrink:0;font-weight:400;min-width:28px;text-align:right;}
+/* Playing indicator replaces duration */
+.r-playing-dot{width:6px;height:6px;border-radius:50%;background:var(--purple);flex-shrink:0;animation:blink 1.4s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+/* PLAYER */
+.player{background:linear-gradient(180deg,rgba(20,20,50,.97) 0%,rgba(10,10,28,1) 100%);border-top:1px solid rgba(255,255,255,.06);padding:15px 15px 13px;flex-shrink:0;}
+.player-cover-wrap{position:relative;width:88px;height:88px;margin:0 auto 11px;}
+.player-cover{width:88px;height:88px;border-radius:50%;overflow:hidden;border:2.5px solid rgba(124,77,255,.4);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;}
+.player-cover img{width:100%;height:100%;object-fit:cover;display:block;}
+.player-cover.spin{animation:rotate 9s linear infinite;}
+@keyframes rotate{to{transform:rotate(360deg);}}
+.glow-ring{position:absolute;inset:-4px;border-radius:50%;border:2px solid transparent;background:linear-gradient(135deg,var(--purple),var(--pink)) border-box;-webkit-mask:linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);-webkit-mask-composite:destination-out;mask-composite:exclude;opacity:0;transition:opacity .4s;}
+.player-cover-wrap.glow .glow-ring{opacity:1;}
+.p-track{text-align:center;margin-bottom:11px;}
+.p-title{font-size:13px;font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.p-artist{font-size:11px;color:var(--sub);}
+.p-progress{margin-bottom:10px;}
+.p-bar{width:100%;height:4px;background:rgba(255,255,255,.1);border-radius:2px;cursor:pointer;position:relative;margin-bottom:5px;}
+.p-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--pink));border-radius:2px;position:relative;transition:width .15s;}
+.p-fill::after{content:'';position:absolute;right:-5px;top:50%;transform:translateY(-50%);width:10px;height:10px;background:#fff;border-radius:50%;box-shadow:0 0 6px rgba(124,77,255,.6);}
+.p-times{display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);}
+.p-controls{display:flex;align-items:center;justify-content:center;gap:11px;margin-bottom:11px;}
+.pctrl{background:none;border:none;color:var(--sub);cursor:pointer;font-size:17px;padding:4px;transition:all .15s;display:flex;align-items:center;}
+.pctrl:hover{color:var(--text);transform:scale(1.1);}
+.pctrl.active{color:var(--purple);}
+.p-play{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .2s;box-shadow:0 4px 14px rgba(124,77,255,.45);}
+.p-play:hover{transform:scale(1.08);box-shadow:0 6px 20px rgba(124,77,255,.6);}
+.p-vol{display:flex;align-items:center;gap:7px;}
+.p-vol-icon{font-size:13px;color:var(--sub);cursor:pointer;flex-shrink:0;user-select:none;}
+.p-vol-slider{flex:1;-webkit-appearance:none;height:3px;border-radius:2px;background:rgba(255,255,255,.12);outline:none;cursor:pointer;}
+.p-vol-slider::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;background:#fff;cursor:pointer;}
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);background:rgba(20,20,50,.97);backdrop-filter:blur(10px);border:1px solid rgba(124,77,255,.35);color:#fff;padding:9px 18px;border-radius:20px;font-size:12px;font-weight:500;z-index:999;transition:transform .35s;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">🎵</div>
+    <span class="logo-name">Melodia</span>
+  </div>
+  <div class="profile-area">
+    <div class="profile-pic">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTM2lte4SdrUy3T1OjZFbM85dOsxE0KM21NSQ&s" alt="Jane" onerror="this.src='https://ui-avatars.com/api/?name=Jane+Wilson&background=7c4dff&color=fff&size=80'">
+    </div>
+    <div class="profile-name">Ayesha Amjad</div>
+    <div class="profile-label">Premium Member</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" data-page="discover" onclick="navigate(this)"><span class="nav-icon">⊞</span> Discover</div>
+    <div class="nav-item" data-page="trending" onclick="navigate(this)"><span class="nav-icon">📈</span> Trending<span class="nav-badge">Hot</span></div>
+    <div class="nav-item" data-page="album" onclick="navigate(this)"><span class="nav-icon">💿</span> Albums</div>
+    <div class="nav-item" data-page="playlist" onclick="navigate(this)"><span class="nav-icon">🎵</span> Playlist</div>
+    <div class="nav-item" data-page="favorites" onclick="navigate(this)"><span class="nav-icon">♥</span> Favorites</div>
+  </nav>
+  <div class="nav-bottom">
+    <div class="nav-item" onclick="showToast('⚙ Settings coming soon!')"><span class="nav-icon">⚙</span> Settings</div>
+    <div class="nav-item" onclick="showToast('👋 See you soon!')"><span class="nav-icon">↪</span> Logout</div>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<div class="content">
+
+  <!-- DISCOVER -->
+  <div class="page active" id="page-discover">
+    <div class="page-header">
+      <div class="page-title">Discover</div>
+      <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search songs, artists..."></div>
+    </div>
+    <div class="sec-title">Popular Playlist</div>
+    <div class="hero-row">
+      <div class="hero-card lg" style="background:linear-gradient(135deg,#1a0533,#4a1080,#0033aa)" onclick="playSong(0)">
+        <div class="hero-overlay"><div class="hero-name">Uplifting Rhythms</div><button class="hero-btn">▶ LISTEN NOW</button></div>
+      </div>
+      <div class="hero-card md" style="background:linear-gradient(135deg,#0d1b2a,#1a3a5c)" onclick="playSong(3)">
+        <div class="hero-overlay"><div class="hero-name">Midnight Moods</div><button class="hero-btn">▶ LISTEN NOW</button></div>
+      </div>
+      <div class="hero-card sm" style="background:linear-gradient(135deg,#1a0a2a,#3d1060)" onclick="playSong(6)">
+        <div class="hero-overlay"><div class="hero-name">Starters</div></div>
+      </div>
+      <div class="hero-card sm" style="background:linear-gradient(135deg,#0a1520,#1f4060);opacity:.6" onclick="playSong(9)">
+        <div class="hero-overlay"><div class="hero-name">Chill Beats</div></div>
+      </div>
+    </div>
+    <div class="dots"><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div class="sec-title">Featured Artists</div>
+    <div class="artists-row" id="discovArtists"></div>
+    <div class="sec-title">Recommended Albums</div>
+    <div class="albums-row" id="discovAlbums"></div>
+  </div>
+
+  <!-- TRENDING -->
+  <div class="page" id="page-trending">
+    <div class="page-header"><div class="page-title">🔥 Trending Now</div><div class="search-bar"><span>🔍</span><input type="text" placeholder="Search..."></div></div>
+    <div class="sec-title">Top Charts This Week</div>
+    <div class="trending-grid" id="trendingGrid"></div>
+  </div>
+
+  <!-- ALBUMS -->
+  <div class="page" id="page-album">
+    <div class="page-header"><div class="page-title">💿 Albums</div><div class="search-bar"><span>🔍</span><input type="text" placeholder="Search albums..."></div></div>
+    <div class="sec-title">All Albums</div>
+    <div class="albums-page-grid" id="albumsGrid"></div>
+  </div>
+
+  <!-- PLAYLIST -->
+  <div class="page" id="page-playlist">
+    <div class="page-header">
+      <div class="page-title">🎵 My Playlists</div>
+      <button style="background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:#fff;padding:8px 16px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;cursor:pointer;" onclick="showToast('✨ New playlist created!')">+ New Playlist</button>
+    </div>
+    <div class="playlists-grid" id="playlistsGrid"></div>
+  </div>
+
+  <!-- FAVORITES -->
+  <div class="page" id="page-favorites">
+    <div class="page-header"><div class="page-title">♥ Favorites</div><span style="color:var(--sub);font-size:12px;">12 songs</span></div>
+    <div class="fav-list" id="favList"></div>
+  </div>
+
+</div>
+
+<!-- RIGHT PANEL -->
+<aside class="right">
+  <div class="r-title">Recommended Songs</div>
+  <div class="r-list" id="rList"></div>
+  <div class="player">
+    <div class="player-cover-wrap" id="coverWrap">
+      <div class="glow-ring"></div>
+      <div class="player-cover" id="playerCover" onclick="togglePlay()">
+        <img id="coverImg" src="" alt="" style="display:none">
+        <span id="coverEmoji">🎵</span>
+      </div>
+    </div>
+    <div class="p-track">
+      <div class="p-title" id="pTitle">Select a song</div>
+      <div class="p-artist" id="pArtist">—</div>
+    </div>
+    <div class="p-progress">
+      <div class="p-bar" id="pBar" onclick="seekSong(event)">
+        <div class="p-fill" id="pFill" style="width:0%"></div>
+      </div>
+      <div class="p-times"><span id="pCur">0:00</span><span id="pDur">0:00</span></div>
+    </div>
+    <div class="p-controls">
+      <button class="pctrl" id="shuffleBtn" onclick="toggleShuffle()" title="Shuffle">⇄</button>
+      <button class="pctrl" onclick="prevSong()" title="Previous">⏮</button>
+      <button class="p-play" id="playBtn" onclick="togglePlay()">▶</button>
+      <button class="pctrl" onclick="nextSong()" title="Next">⏭</button>
+      <button class="pctrl" id="repeatBtn" onclick="toggleRepeat()" title="Repeat">↻</button>
+    </div>
+    <div class="p-vol">
+      <span class="p-vol-icon" id="volIcon" onclick="toggleMute()">🔊</span>
+      <input type="range" class="p-vol-slider" id="volSlider" min="0" max="100" value="75" oninput="setVol(this.value)">
+    </div>
+  </div>
+</aside>
+</div>
+
+<div class="toast" id="toast"></div>
+<audio id="audio"></audio>
+
+<script>
+
+// Audio:
+const songs = [
+  {title:"Blank Space",        artist:"Taylor Swift", dur:"3:31", img:"https://picsum.photos/seed/ts1989/200/200",   audio:"https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3"},
+  {title:"One Dance",          artist:"Drake",        dur:"2:53", img:"https://picsum.photos/seed/drake1/200/200",   audio:"https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3"},
+  {title:"Lose Control",       artist:"Teddy Swims",  dur:"3:22", img:"https://picsum.photos/seed/teddy1/200/200",  audio:"https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3"},
+  {title:"Blinding Lights",    artist:"The Weeknd",   dur:"3:20", img:"https://picsum.photos/seed/weeknd1/200/200", audio:"https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3"},
+  {title:"Levitating",         artist:"Dua Lipa",     dur:"3:23", img:"https://picsum.photos/seed/dualipa1/200/200",audio:"https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3"},
+  {title:"Pawn It All",        artist:"Alicia Keys",  dur:"5:10", img:"https://picsum.photos/seed/alicia1/200/200", audio:"https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3"},
+  {title:"Delicate",           artist:"Taylor Swift", dur:"3:52", img:"https://picsum.photos/seed/tsrep/200/200",   audio:"https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3"},
+  {title:"Paradise",           artist:"Coldplay",     dur:"4:23", img:"https://picsum.photos/seed/cold1/200/200",   audio:"https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3"},
+  {title:"Easy On Me",         artist:"Adele",        dur:"3:44", img:"https://picsum.photos/seed/adele30/200/200", audio:"https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3"},
+  {title:"Last Christmas",     artist:"Wham!",        dur:"4:39", img:"https://picsum.photos/seed/wham1/200/200",   audio:"https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3"},
+  {title:"Be The One",         artist:"Dua Lipa",     dur:"3:24", img:"https://picsum.photos/seed/dualipa2/200/200",audio:"https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3"},
+  {title:"Dark Side",          artist:"Pink Floyd",   dur:"5:01", img:"https://picsum.photos/seed/floyd1/200/200",  audio:"https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3"},
+];
+
+const artists = [
+  {name:"Taylor Swift", img:"https://picsum.photos/seed/artts/200/200",   song:0},
+  {name:"The Weeknd",   img:"https://picsum.photos/seed/artwknd/200/200", song:3},
+  {name:"Dua Lipa",     img:"https://picsum.photos/seed/artdua/200/200",  song:4},
+  {name:"Drake",        img:"https://picsum.photos/seed/artdrk/200/200",  song:1},
+  {name:"Alicia Keys",  img:"https://picsum.photos/seed/artalc/200/200",  song:5},
+  {name:"Adele",        img:"https://picsum.photos/seed/artadl/200/200",  song:8},
+  {name:"Coldplay",     img:"https://picsum.photos/seed/artcld/200/200",  song:7},
+  {name:"Billie Eilish",img:"https://picsum.photos/seed/artbil/200/200",  song:6},
+];
+
+const albums = [
+  {title:"Views",            artist:"Drake",       img:"https://picsum.photos/seed/alb_views/300/300",    song:1},
+  {title:"Speak Now",        artist:"Taylor Swift",img:"https://picsum.photos/seed/alb_speak/300/300",    song:0},
+  {title:"Born to Die",      artist:"Lana Del Rey",img:"https://picsum.photos/seed/alb_born/300/300",     song:2},
+  {title:"Future Nostalgia", artist:"Dua Lipa",    img:"https://picsum.photos/seed/alb_future/300/300",   song:4},
+  {title:"Dark Side of Moon",artist:"Pink Floyd",  img:"https://picsum.photos/seed/alb_dark/300/300",     song:11},
+  {title:"After Hours",      artist:"The Weeknd",  img:"https://picsum.photos/seed/alb_after/300/300",    song:3},
+  {title:"30",               artist:"Adele",       img:"https://picsum.photos/seed/alb_thirty/300/300",   song:8},
+  {title:"Mylo Xyloto",      artist:"Coldplay",    img:"https://picsum.photos/seed/alb_mylo/300/300",     song:7},
+  {title:"Reputation",       artist:"Taylor Swift",img:"https://picsum.photos/seed/alb_rep/300/300",      song:6},
+];
+
+const playlists = [
+  {name:"Morning Vibes",   count:"12 songs",img:"https://picsum.photos/seed/pl_morn/400/300",  song:0},
+  {name:"Midnight Moods",  count:"8 songs", img:"https://picsum.photos/seed/pl_mid/400/300",   song:3},
+  {name:"Workout Beats",   count:"15 songs",img:"https://picsum.photos/seed/pl_work/400/300",  song:4},
+  {name:"Chill Sunday",    count:"10 songs",img:"https://picsum.photos/seed/pl_chill/400/300", song:7},
+  {name:"Top Hits 2024",   count:"20 songs",img:"https://picsum.photos/seed/pl_top/400/300",   song:1},
+  {name:"Late Night Drive",count:"7 songs", img:"https://picsum.photos/seed/pl_late/400/300",  song:11},
+];
+
+let curSong = -1, playing = false, shuffle = false, repeat = false, muted = false, prevVol = 75;
+const audio = document.getElementById('audio');
+
+function fallback(name, size=80){
+  const colors=['1a1a3e','2d1b69','0d2137','1a0a2a','0a1a2a','162030'];
+  const c = colors[name.charCodeAt(0)%colors.length];
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${c}&color=9988ff&size=${size}&bold=true&format=png`;
+}
+
+function imgEl(src, alt, size=80){
+  const fb = fallback(alt, size);
+  return `<img src="${src}" alt="${alt}" loading="lazy" onerror="this.onerror=null;this.src='${fb}'">`;
+}
+
+function renderAll(){
+  // Artists
+  document.getElementById('discovArtists').innerHTML = artists.map(a=>`
+    <div class="artist" onclick="playSong(${a.song})">
+      <div class="artist-pic">${imgEl(a.img,a.name,200)}</div>
+      <div class="artist-name">${a.name}</div>
+    </div>`).join('');
+
+  // Albums discover row
+  document.getElementById('discovAlbums').innerHTML = albums.slice(0,7).map(a=>`
+    <div class="album" onclick="playSong(${a.song})">
+      <div class="album-cover">
+        ${imgEl(a.img,a.title,300)}
+        <div class="alb-play-ov"><button class="alb-play-btn">▶</button></div>
+      </div>
+      <div class="album-title">${a.title}</div>
+      <div class="album-artist-name">${a.artist}</div>
+    </div>`).join('');
+
+  // Trending
+  document.getElementById('trendingGrid').innerHTML = songs.map((s,i)=>`
+    <div class="trending-card" onclick="playSong(${i})">
+      <div class="tc-wrap">
+        <img class="trending-img" src="${s.img}" alt="${s.title}" loading="lazy" onerror="this.onerror=null;this.src='${fallback(s.title,300)}'">
+        <div class="trending-rank">#${i+1}</div>
+      </div>
+      <div class="trending-info"><div class="trending-title">${s.title}</div><div class="trending-sub">${s.artist} · ${s.dur}</div></div>
+    </div>`).join('');
+
+  // Albums page
+  document.getElementById('albumsGrid').innerHTML = albums.map(a=>`
+    <div class="ap-card" onclick="playSong(${a.song})">
+      <div class="ap-cover">
+        ${imgEl(a.img,a.title,300)}
+        <div class="alb-play-ov"><button class="alb-play-btn">▶</button></div>
+      </div>
+      <div class="album-title" style="font-size:12px">${a.title}</div>
+      <div class="album-artist-name">${a.artist}</div>
+    </div>`).join('');
+
+  // Playlists
+  document.getElementById('playlistsGrid').innerHTML = playlists.map(p=>`
+    <div class="pl-card" onclick="playSong(${p.song})">
+      <div class="pl-cover">
+        ${imgEl(p.img,p.name,400)}
+        <div class="pl-overlay"></div>
+      </div>
+      <div class="pl-info"><div class="pl-name">${p.name}</div><div class="pl-count">${p.count}</div></div>
+    </div>`).join('');
+
+  // Favorites
+  document.getElementById('favList').innerHTML = songs.map((s,i)=>`
+    <div class="fav-item ${i===curSong?'playing':''}" onclick="playSong(${i})">
+      <div class="fav-num">${i===curSong&&playing?'♪':i+1}</div>
+      <div class="fav-img">${imgEl(s.img,s.title,80)}</div>
+      <div class="fav-info"><div class="fav-title">${s.title}</div><div class="fav-artist">${s.artist}</div></div>
+      <span class="fav-heart">♥</span>
+      <div class="fav-dur">${s.dur}</div>
+    </div>`).join('');
+
+  // Right panel — matches reference: thumbnail | title+artist | duration flush right
+  document.getElementById('rList').innerHTML = songs.map((s,i)=>`
+    <div class="r-item ${i===curSong?'active':''}" onclick="playSong(${i})">
+      <div class="r-thumb">${imgEl(s.img,s.title,80)}</div>
+      <div class="r-iinfo">
+        <div class="r-ititle">${s.title}</div>
+        <div class="r-iartist">${s.artist}</div>
+      </div>
+      ${i===curSong&&playing
+        ? '<div class="r-playing-dot"></div>'
+        : `<div class="r-idur">${s.dur}</div>`}
+    </div>`).join('');
+}
+
+function playSong(idx){
+  curSong = idx;
+  const s = songs[idx];
+  playing = true;
+  const coverImg = document.getElementById('coverImg');
+  const coverEmoji = document.getElementById('coverEmoji');
+  coverImg.src = s.img;
+  coverImg.style.display = 'block';
+  coverEmoji.style.display = 'none';
+  coverImg.onerror = ()=>{ coverImg.onerror=null; coverImg.src=fallback(s.title,200); };
+  document.getElementById('playerCover').classList.add('spin');
+  document.getElementById('coverWrap').classList.add('glow');
+  document.getElementById('pTitle').textContent = s.title;
+  document.getElementById('pArtist').textContent = s.artist;
+  document.getElementById('playBtn').textContent = '⏸';
+  audio.src = s.audio;
+  audio.volume = document.getElementById('volSlider').value / 100;
+  audio.play().catch(()=>{ showToast('⚠ Audio blocked – click play again'); playing=false; document.getElementById('playBtn').textContent='▶'; });
+  showToast('▶ Now playing: '+s.title);
+  renderAll();
+  // Scroll right list to active
+  const active = document.getElementById('rList').children[idx];
+  if(active) active.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+
+function togglePlay(){
+  if(curSong<0){ playSong(0); return; }
+  if(playing){
+    audio.pause(); playing=false;
+    document.getElementById('playBtn').textContent='▶';
+    document.getElementById('playerCover').classList.remove('spin');
+    document.getElementById('coverWrap').classList.remove('glow');
+  } else {
+    audio.play().catch(()=>{});
+    playing=true;
+    document.getElementById('playBtn').textContent='⏸';
+    document.getElementById('playerCover').classList.add('spin');
+    document.getElementById('coverWrap').classList.add('glow');
+  }
+  renderAll();
+}
+
+function nextSong(){ playSong(shuffle ? Math.floor(Math.random()*songs.length) : (curSong+1)%songs.length); }
+function prevSong(){ if(audio.currentTime>3){audio.currentTime=0;return;} playSong((curSong-1+songs.length)%songs.length); }
+
+function seekSong(e){
+  const r = document.getElementById('pBar').getBoundingClientRect();
+  const pct = Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+  if(audio.duration) audio.currentTime = pct * audio.duration;
+}
+
+function toggleShuffle(){
+  shuffle=!shuffle;
+  document.getElementById('shuffleBtn').classList.toggle('active',shuffle);
+  showToast(shuffle?'🔀 Shuffle ON':'🔀 Shuffle OFF');
+}
+
+function toggleRepeat(){
+  repeat=!repeat; audio.loop=repeat;
+  document.getElementById('repeatBtn').classList.toggle('active',repeat);
+  showToast(repeat?'↻ Repeat ON':'↻ Repeat OFF');
+}
+
+function setVol(val){
+  audio.volume=val/100;
+  const v=parseInt(val), ic=document.getElementById('volIcon');
+  ic.textContent=v===0?'🔇':v<40?'🔈':v<70?'🔉':'🔊';
+  if(v>0) muted=false;
+}
+
+function toggleMute(){
+  if(!muted){
+    prevVol=document.getElementById('volSlider').value;
+    document.getElementById('volSlider').value=0; audio.volume=0;
+    document.getElementById('volIcon').textContent='🔇'; muted=true;
+  } else {
+    document.getElementById('volSlider').value=prevVol; audio.volume=prevVol/100;
+    setVol(prevVol); muted=false;
+  }
+}
+
+audio.addEventListener('timeupdate',()=>{
+  if(!audio.duration) return;
+  const pct=(audio.currentTime/audio.duration)*100;
+  document.getElementById('pFill').style.width=pct+'%';
+  document.getElementById('pCur').textContent=fmt(audio.currentTime);
+  document.getElementById('pDur').textContent=fmt(audio.duration);
+});
+audio.addEventListener('ended',()=>{ if(!repeat) nextSong(); });
+
+function fmt(sec){ const m=Math.floor(sec/60),s=Math.floor(sec%60); return `${m}:${s.toString().padStart(2,'0')}`; }
+
+function navigate(el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+el.dataset.page).classList.add('active');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+renderAll();
+</script>
+</body>
+</html>
